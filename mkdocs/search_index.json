@@ -1,0 +1,49 @@
+{
+    "docs": [
+        {
+            "location": "/", 
+            "text": "", 
+            "title": "Home"
+        }, 
+        {
+            "location": "/getting_started/", 
+            "text": "", 
+            "title": "Getting Started"
+        }, 
+        {
+            "location": "/api/", 
+            "text": "This page details the API accepting requests for the SwissSimilarities database.\n\n\nAs the search process might take some time, the search is asynchronous and then split in two parts: \n\n\n\n\nSubmitting a search request via a POST call,\n\n\nPolling to retrieve the results via a GET\n\n\n\n\nThe following flow diagram shows a typical interaction with the server: the request is submitted first, the server\nreturns a HTTP status code \n201 Created\n along with a \nUUID\n\nreferencing the request ID, which has be be used in all the subsequent API calls. \nThe user will the start polling the server. HTTP status code \n202 Accepted\n is returned by the server until\nthe request is complet. Then a \n200 OK\n is used.\n\n\n\n\nThe next section details the API, including the parameters exchanged with the server.\n\n\nSubmit a job\n\n\nPOST /api/v1/submit\n\n\n\n\nThe payload of the POST is JSON encoded, containing the attributes shown in the table below:\n\n\n\n\n\n\n\n\nParameter\n\n\nType\n\n\nMandatory\n\n\nValue\n\n\n\n\n\n\n\n\n\n\nfingerprint\n\n\nString\n\n\nyes\n\n\nhex encoded, 128 bytes molecule fingerprint. See the example below\n\n\n\n\n\n\nlimit\n\n\nNumber\n\n\nno\n\n\nnumber of matches to return, default 400, max 1000\n\n\n\n\n\n\nthreshold\n\n\nNumber\n\n\nno\n\n\nsmiliarity threshold. Molecules below this threshold will not be returned, even if in the limit. Default 0.8, min 0.5\n\n\n\n\n\n\n\n\nAn example of payload would be: \n\n\n{ \n   \nfingerprint\n: \nhex encoded, 128 bytes molecule fingerprint\n\n   \nlimit\n: 400\n   \nthreshold\n: 0.8\n}\n\n\n\n\nIf the request is properly formatted, the server returns a HTTP status \n201 Created\n. The header will also contains\nthe location at which the job can be polled, as well as a JSON object containting the requestId:\n\n\nLocation: /api/v1/result/$REQUEST_UUID\n\n{\n   \nrequestId\n: \n$REQUEST_UUID\n\n}\n\n\n\n\nFor instance\n\n\nPOST /api/v1/submit\n\n{ \n   \nfingerprint\n: \nhex encoded, 128 bytes molecule fingerprint\n\n   \nretrieve\n: 400\n   \nthreshold\n: 0.8\n}\n\nReturns 201 Created\n...\nLocation: /api/v1/result/$REQUEST_UUID\n{\n   \nuuid\n: \n$REQUEST_UUID\n\n}\n\n\n\n\nMalformatted requests, as well as requests missing the mandatory parameter(s) \nwill return a HTTP status \n400 Bad Request\n.\n\n\nRetrieve the results\n\n\nRetrieving the results might be composed of several calls. As long as the result is not ready, the call returns\na HTTP status \n202 Accepted\n. Once the result is ready, \n200 OK\n is returned along with the result itself\nJSON encoded. The result is an array (sorted sequence) of molecules matching the request,\nsorted by top similarity descendant. The exact format of the result is detailled below.\n\n\nProcessing not completed\n\n\nGET /api/v1/result/$requestId\n\n202 Accepted\n\n\n\n\nProcessing completed\n\n\nGET /api/v1/result/$requestId\n\n20O OK\n\n[ \n  {\n    \nfingerprint\n: \n...\n,\n    \nsmile\n: \n...\n\n    \nsimilarity\n: 0.9999,\n    \ndetails\n: {\n      \nname\n: ...\n    }\n  },\n  {\n    ...\n  },\n  ...\n]     \n\n\n\n\n\n\n\n\n\n\nParameter\n\n\nType\n\n\nMandatory\n\n\nValue\n\n\n\n\n\n\n\n\n\n\nfingerprint\n\n\nString\n\n\nyes\n\n\n\n\n\n\n\n\nsmile\n\n\nString\n\n\nyes\n\n\n\n\n\n\n\n\nsimilarity\n\n\nNumber\n\n\nyes\n\n\n\n\n\n\n\n\ndetails\n\n\nObject\n\n\nyes\n\n\n\n\n\n\n\n\ndetails.name\n\n\nString\n\n\nyes\n\n\n\n\n\n\n\n\n\n\nResult TTL\n\n\nThe result is kept 4 hours before it is discarded. If you're not retrieving the data during this time laps, \nthe data is lost.\n\n\nSubsequent retrieve call will consistently return \n404 Not Found\n.", 
+            "title": "API"
+        }, 
+        {
+            "location": "/api/#submit-a-job", 
+            "text": "POST /api/v1/submit  The payload of the POST is JSON encoded, containing the attributes shown in the table below:     Parameter  Type  Mandatory  Value      fingerprint  String  yes  hex encoded, 128 bytes molecule fingerprint. See the example below    limit  Number  no  number of matches to return, default 400, max 1000    threshold  Number  no  smiliarity threshold. Molecules below this threshold will not be returned, even if in the limit. Default 0.8, min 0.5     An example of payload would be:   { \n    fingerprint :  hex encoded, 128 bytes molecule fingerprint \n    limit : 400\n    threshold : 0.8\n}  If the request is properly formatted, the server returns a HTTP status  201 Created . The header will also contains\nthe location at which the job can be polled, as well as a JSON object containting the requestId:  Location: /api/v1/result/$REQUEST_UUID\n\n{\n    requestId :  $REQUEST_UUID \n}  For instance  POST /api/v1/submit\n\n{ \n    fingerprint :  hex encoded, 128 bytes molecule fingerprint \n    retrieve : 400\n    threshold : 0.8\n}\n\nReturns 201 Created\n...\nLocation: /api/v1/result/$REQUEST_UUID\n{\n    uuid :  $REQUEST_UUID \n}  Malformatted requests, as well as requests missing the mandatory parameter(s) \nwill return a HTTP status  400 Bad Request .", 
+            "title": "Submit a job"
+        }, 
+        {
+            "location": "/api/#retrieve-the-results", 
+            "text": "Retrieving the results might be composed of several calls. As long as the result is not ready, the call returns\na HTTP status  202 Accepted . Once the result is ready,  200 OK  is returned along with the result itself\nJSON encoded. The result is an array (sorted sequence) of molecules matching the request,\nsorted by top similarity descendant. The exact format of the result is detailled below.", 
+            "title": "Retrieve the results"
+        }, 
+        {
+            "location": "/api/#processing-not-completed", 
+            "text": "GET /api/v1/result/$requestId\n\n202 Accepted", 
+            "title": "Processing not completed"
+        }, 
+        {
+            "location": "/api/#processing-completed", 
+            "text": "GET /api/v1/result/$requestId\n\n20O OK\n\n[ \n  {\n     fingerprint :  ... ,\n     smile :  ... \n     similarity : 0.9999,\n     details : {\n       name : ...\n    }\n  },\n  {\n    ...\n  },\n  ...\n]          Parameter  Type  Mandatory  Value      fingerprint  String  yes     smile  String  yes     similarity  Number  yes     details  Object  yes     details.name  String  yes", 
+            "title": "Processing completed"
+        }, 
+        {
+            "location": "/api/#result-ttl", 
+            "text": "The result is kept 4 hours before it is discarded. If you're not retrieving the data during this time laps, \nthe data is lost.  Subsequent retrieve call will consistently return  404 Not Found .", 
+            "title": "Result TTL"
+        }, 
+        {
+            "location": "/architecture/", 
+            "text": "", 
+            "title": "Architecture"
+        }
+    ]
+}
