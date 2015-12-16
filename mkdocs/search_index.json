@@ -7,8 +7,23 @@
         }, 
         {
             "location": "/getting_started/", 
-            "text": "", 
+            "text": "Submit the request\n\n\ncurl -vvvv -X POST --data '{ \nfingerprint\n: \n0001801a018002082100110810b00610001c106000004020030098020000110806100100400048e00100a00c608188000200980702600201816600c1020c000c080000080400800802e0200800022801c010008018008138218000418970041800086000c008014020048000000400880400420420c6000860260000614306a6\n, \nlimit\n: 400, \nthreshold\n: 0.8 }' http://localhost:8080/api/v1/submit\n...\n\n Location: /api/v1/result/c94480a6-9e03-4ca1-b458-b04ea7603551\n...\n\n\n\n\nPlease note the \nLocation\n URI for further pollling.\n\n\nPoll the result\n\n\ncurl -vvvv http://localhost:8080/api/v1/result/c94480a6-9e03-4ca1-b458-b04ea7603551\n...\n\n HTTP/1.1 202 Accepted\n...\n\n\n\n\nHTTP Code \n202\n indicates that the query is running and you should retry in few seconds.\n\n\nRetrieve the content\n\n\nThe query to retrieve the content is the same, the a HTTP code \n200\n is returned\nalong side with the payload\n\n\ncurl -vvvv http://localhost:8080/api/v1/result/c94480a6-9e03-4ca1-b458-b04ea7603551\n...\n\n HTTP/1.1 200 Ok\n...\n0001801a018002082100110810b00610001c106000004020030098020000110806100100400048e00100a00c608188000200980702600201816600c1020c000c080000080400800802e0200800022801c010008018008138218000418970041800086000c008014020048000000400880400420420c6000860260000614306a0, COc1ccc(cc1)n1c(=O)c2cc(c(Cl)cc2nc1[C@@H]1C[C@H](C)CC[C@H]1C(C)C)S(=O)(=O)N, 1.0, ; Nc1cc(Cl)c(cc1C(O)=O)S(N)(=O)=O ; 1287030|FLUKA ; SigmaAldrich ; COc1ccc(NC(=O)[C@@H]2C[C@H](C)CC[C@H]2C(C)C)cc1 ; W0519|SIGMA ; SigmaAldrich ; 0008-0000016185 ; Niementowski_quinazoline\n0401801a018002082100110810b00610001c10e000004020020098020000100806100100400048e00100a00c60818800028098070a600201816600c1020c000c180000080400800800e0000800022801c000008018008138218000418970041800086000c008014028048000000400080400420420c6000860240000614306a0, CCOc1ccc(cc1)n1c(C[C@H](C)O)nc2cc(Cl)c(cc2c1=O)S(=O)(=O)N, 0.9235294117647059, ; Nc1cc(Cl)c(cc1C(O)=O)S(N)(=O)=O ; 1287030|FLUKA ; SigmaAldrich ; CCOc1ccc(NC(=O)C[C@H](C)O)cc1 ; B4027|FLUKA ; SigmaAldrich ; 0008-0000014810 ; Niementowski_quinazoline\n...", 
             "title": "Getting Started"
+        }, 
+        {
+            "location": "/getting_started/#submit-the-request", 
+            "text": "curl -vvvv -X POST --data '{  fingerprint :  0001801a018002082100110810b00610001c106000004020030098020000110806100100400048e00100a00c608188000200980702600201816600c1020c000c080000080400800802e0200800022801c010008018008138218000418970041800086000c008014020048000000400880400420420c6000860260000614306a6 ,  limit : 400,  threshold : 0.8 }' http://localhost:8080/api/v1/submit\n...  Location: /api/v1/result/c94480a6-9e03-4ca1-b458-b04ea7603551\n...  Please note the  Location  URI for further pollling.", 
+            "title": "Submit the request"
+        }, 
+        {
+            "location": "/getting_started/#poll-the-result", 
+            "text": "curl -vvvv http://localhost:8080/api/v1/result/c94480a6-9e03-4ca1-b458-b04ea7603551\n...  HTTP/1.1 202 Accepted\n...  HTTP Code  202  indicates that the query is running and you should retry in few seconds.", 
+            "title": "Poll the result"
+        }, 
+        {
+            "location": "/getting_started/#retrieve-the-content", 
+            "text": "The query to retrieve the content is the same, the a HTTP code  200  is returned\nalong side with the payload  curl -vvvv http://localhost:8080/api/v1/result/c94480a6-9e03-4ca1-b458-b04ea7603551\n...  HTTP/1.1 200 Ok\n...\n0001801a018002082100110810b00610001c106000004020030098020000110806100100400048e00100a00c608188000200980702600201816600c1020c000c080000080400800802e0200800022801c010008018008138218000418970041800086000c008014020048000000400880400420420c6000860260000614306a0, COc1ccc(cc1)n1c(=O)c2cc(c(Cl)cc2nc1[C@@H]1C[C@H](C)CC[C@H]1C(C)C)S(=O)(=O)N, 1.0, ; Nc1cc(Cl)c(cc1C(O)=O)S(N)(=O)=O ; 1287030|FLUKA ; SigmaAldrich ; COc1ccc(NC(=O)[C@@H]2C[C@H](C)CC[C@H]2C(C)C)cc1 ; W0519|SIGMA ; SigmaAldrich ; 0008-0000016185 ; Niementowski_quinazoline\n0401801a018002082100110810b00610001c10e000004020020098020000100806100100400048e00100a00c60818800028098070a600201816600c1020c000c180000080400800800e0000800022801c000008018008138218000418970041800086000c008014028048000000400080400420420c6000860240000614306a0, CCOc1ccc(cc1)n1c(C[C@H](C)O)nc2cc(Cl)c(cc2c1=O)S(=O)(=O)N, 0.9235294117647059, ; Nc1cc(Cl)c(cc1C(O)=O)S(N)(=O)=O ; 1287030|FLUKA ; SigmaAldrich ; CCOc1ccc(NC(=O)C[C@H](C)O)cc1 ; B4027|FLUKA ; SigmaAldrich ; 0008-0000014810 ; Niementowski_quinazoline\n...", 
+            "title": "Retrieve the content"
         }, 
         {
             "location": "/api/", 

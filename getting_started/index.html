@@ -64,6 +64,15 @@
         
             <ul>
             
+                <li class="toctree-l3"><a href="#submit-the-request">Submit the request</a></li>
+                
+            
+                <li class="toctree-l3"><a href="#poll-the-result">Poll the result</a></li>
+                
+            
+                <li class="toctree-l3"><a href="#retrieve-the-content">Retrieve the content</a></li>
+                
+            
             </ul>
         
     </li>
@@ -115,7 +124,33 @@
           <div role="main">
             <div class="section">
               
-                
+                <h2 id="submit-the-request">Submit the request</h2>
+<pre><code class="bash">curl -vvvv -X POST --data '{ &quot;fingerprint&quot;: &quot;0001801a018002082100110810b00610001c106000004020030098020000110806100100400048e00100a00c608188000200980702600201816600c1020c000c080000080400800802e0200800022801c010008018008138218000418970041800086000c008014020048000000400880400420420c6000860260000614306a6&quot;, &quot;limit&quot;: 400, &quot;threshold&quot;: 0.8 }' http://localhost:8080/api/v1/submit
+...
+&lt; Location: /api/v1/result/c94480a6-9e03-4ca1-b458-b04ea7603551
+...
+</code></pre>
+
+<p>Please note the <code>Location</code> URI for further pollling.</p>
+<h2 id="poll-the-result">Poll the result</h2>
+<pre><code class="bash">curl -vvvv http://localhost:8080/api/v1/result/c94480a6-9e03-4ca1-b458-b04ea7603551
+...
+&lt; HTTP/1.1 202 Accepted
+...
+</code></pre>
+
+<p>HTTP Code <code>202</code> indicates that the query is running and you should retry in few seconds.</p>
+<h2 id="retrieve-the-content">Retrieve the content</h2>
+<p>The query to retrieve the content is the same, the a HTTP code <code>200</code> is returned
+along side with the payload</p>
+<pre><code class="bash">curl -vvvv http://localhost:8080/api/v1/result/c94480a6-9e03-4ca1-b458-b04ea7603551
+...
+&lt; HTTP/1.1 200 Ok
+...
+0001801a018002082100110810b00610001c106000004020030098020000110806100100400048e00100a00c608188000200980702600201816600c1020c000c080000080400800802e0200800022801c010008018008138218000418970041800086000c008014020048000000400880400420420c6000860260000614306a0, COc1ccc(cc1)n1c(=O)c2cc(c(Cl)cc2nc1[C@@H]1C[C@H](C)CC[C@H]1C(C)C)S(=O)(=O)N, 1.0, ; Nc1cc(Cl)c(cc1C(O)=O)S(N)(=O)=O ; 1287030|FLUKA ; SigmaAldrich ; COc1ccc(NC(=O)[C@@H]2C[C@H](C)CC[C@H]2C(C)C)cc1 ; W0519|SIGMA ; SigmaAldrich ; 0008-0000016185 ; Niementowski_quinazoline
+0401801a018002082100110810b00610001c10e000004020020098020000100806100100400048e00100a00c60818800028098070a600201816600c1020c000c180000080400800800e0000800022801c000008018008138218000418970041800086000c008014028048000000400080400420420c6000860240000614306a0, CCOc1ccc(cc1)n1c(C[C@H](C)O)nc2cc(Cl)c(cc2c1=O)S(=O)(=O)N, 0.9235294117647059, ; Nc1cc(Cl)c(cc1C(O)=O)S(N)(=O)=O ; 1287030|FLUKA ; SigmaAldrich ; CCOc1ccc(NC(=O)C[C@H](C)O)cc1 ; B4027|FLUKA ; SigmaAldrich ; 0008-0000014810 ; Niementowski_quinazoline
+...
+</code></pre>
               
             </div>
           </div>
