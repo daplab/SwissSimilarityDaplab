@@ -57,4 +57,23 @@ object HexBytesUtil {
     println("test")
   }
 
+  def tanimoto(query: Array[Long], molecule: Array[Long]): Double = {
+
+    val (andCardinality: Double, orCardinality: Double) =
+      query.zip(molecule).foldLeft((0.0, 0.0))
+      { case ((and, or), (b, x)) =>
+        (and + java.lang.Long.bitCount(x & b),
+          or + java.lang.Long.bitCount(x | b))
+      }
+
+    //        query.zip(moleculeArray).foreach((p: (Long, Long)) => {
+    //          val b = p._1
+    //          val x = p._2
+    //          andCardinality += java.lang.Long.bitCount(x & b)
+    //          orCardinality += java.lang.Long.bitCount(x | b)
+    //        })
+
+    andCardinality / orCardinality
+  }
+
 }

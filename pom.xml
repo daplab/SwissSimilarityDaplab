@@ -5,7 +5,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>ch.daplab.swisssimilarity</groupId>
     <artifactId>sparssandra</artifactId>
-    <version>1.0.0-SNAPSHOT</version>
+    <version>2.0.0-SNAPSHOT</version>
 
     <properties>
         <scala.binary.version>2.10</scala.binary.version>
@@ -22,22 +22,27 @@
 
     <repositories>
         <repository>
+            <id>MavenCentral</id>
+            <url>http://repo1.maven.org/maven2/</url>
+        </repository>
+        <repository>
             <id>Cloudera</id>
             <url>https://repository.cloudera.com/artifactory/cloudera-repos</url>
         </repository>
-        <repository>
-            <id>ibiblio</id>
-            <name>Ibiblio</name>
-            <url>http://mirrors.ibiblio.org/maven2/</url>
-        </repository>
-        <repository>
+
+        <!--repository>
             <snapshots>
                 <enabled>false</enabled>
             </snapshots>
             <id>central</id>
             <name>libs-release</name>
             <url>https://artifactory.vrsn.com/artifactory/libs-release</url>
-        </repository>
+        </repository-->
+        <repository>
+    <id>ibiblio</id>
+    <name>Ibiblio</name>
+    <url>http://mirrors.ibiblio.org/maven2/</url>
+</repository>
     </repositories>
 
     <dependencies>
@@ -45,7 +50,7 @@
             <groupId>org.apache.spark</groupId>
             <artifactId>spark-core_${scala.binary.version}</artifactId>
             <version>${spark.streaming.version}</version>
-            <scope>provided</scope>
+            <!--scope>provided</scope-->
             <exclusions>
                 <exclusion>
                     <groupId>asm</groupId>
@@ -149,6 +154,26 @@
             <artifactId>RoaringBitmap</artifactId>
             <version>[0.5,)</version>
         </dependency-->
+        <dependency>
+            <groupId>com.typesafe</groupId>
+            <artifactId>config</artifactId>
+            <version>1.3.0</version>
+        </dependency>
+        <dependency>
+            <groupId>com.twitter</groupId>
+            <artifactId>finagle-core_${scala.binary.version}</artifactId>
+            <version>6.31.0</version>
+        </dependency>
+        <dependency>
+            <groupId>com.twitter</groupId>
+            <artifactId>finagle-http_${scala.binary.version}</artifactId>
+            <version>6.31.0</version>
+        </dependency>
+        <dependency>
+            <groupId>org.json4s</groupId>
+            <artifactId>json4s-jackson_${scala.binary.version}</artifactId>
+            <version>3.2.10</version> <!-- 3.3+ is incompatible with Spark as the time of writing -->
+        </dependency>
     </dependencies>
     <build>
         <plugins>
@@ -285,6 +310,10 @@
                     </execution>
                 </executions>
             </plugin>
+			<plugin>
+				<groupId>org.eclipse.jetty</groupId>
+				<artifactId>jetty-maven-plugin</artifactId>
+			</plugin>
         </plugins>
     </build>
 </project>
