@@ -20,8 +20,10 @@ import java.util.UUID
 import java.util.concurrent._
 
 import ch.daplab.swisssim.dto.{UserRequest, Molecule, UserInput}
-import ch.daplab.swisssim.utils.HexBytesUtil
+import ch.daplab.swisssim.utils.{MoleculeSimilarityComparator, HexBytesUtil}
 import com.datastax.spark.connector._
+import com.google.common.collect.MinMaxPriorityQueue
+import com.google.common.collect.MinMaxPriorityQueue.Builder
 import com.twitter.finagle.http.Method.{Post, Get}
 import com.twitter.logging.Logging
 
@@ -30,17 +32,13 @@ import org.apache.spark.rdd.RDD
 import org.apache.spark.{SparkContext, SparkConf}
 
 import scala.collection.mutable
+import scala.collection.JavaConverters._
 import com.twitter.finagle.{Http, Service}
 import com.twitter.finagle.http
 import com.twitter.util.{Await, Future}
 import org.json4s._
 import org.json4s.jackson.JsonMethods._
 import com.twitter.logging.Logger
-
-/**
-  * Created by bperroud on 11/29/15.
-  *
-  */
 
 // scala.App defines main function
 object SwissSimEngine extends App {
@@ -53,12 +51,15 @@ object SwissSimEngine extends App {
   val CONF_CASSANDRA_TABLE_RESPONSES_CACHE: String = "cassandra.table_responses_cache"
   val CONF_CASSANDRA_HOSTS: String = "cassandra.hosts"
 
+  val CONF_REST_PORT: String = "rest.port"
+
   val config: Config = ConfigFactory.load()
 
   val keyspace = config.getString(CONF_CASSANDRA_KEYSPACE)
   val table = config.getString(CONF_CASSANDRA_TABLE)
   val tableResponsesCache = config.getString(CONF_CASSANDRA_TABLE_RESPONSES_CACHE)
   val hosts = config.getString(CONF_CASSANDRA_HOSTS)
+  val port = config.getInt(CONF_REST_PORT)
 
   // User requests from API will be queued in a liked blocking queue to be
   // exchanged between the web server and the Spark job
@@ -198,6 +199,11 @@ object SwissSimEngine extends App {
     }
   }
 
+  object MoleculeSimilarityOrdering extends Ordering[(Double, Array[Byte])] {
+    override def compare(x: (Double, Array[Byte]), y: (Double, Array[Byte])): Int =
+      x._1 compareTo y._1
+  }
+
   def checkCache(sc: SparkContext, userRequest: UserInput): Option[String] = {
     sc.cassandraTable(keyspace, tableResponsesCache)
       .where("fingerprint = ?", userRequest.fingerprint)
@@ -223,27 +229,34 @@ object SwissSimEngine extends App {
       })
       .filter( t => t._1 >= similarityThreshold)
 
+//      .mapPartitions(i => {
+//        val queue: MinMaxPriorityQueue[(Double, Array[Byte])] =
+//          new Builder[(Double, Array[Byte])](new MoleculeSimilarityComparator)
+//          .maximumSize(numberToReturn).create()
+//        i.foreach(queue.offer(_))
+//        queue.iterator()
+//      }.asScala)
       // TODO: don't sort by key here, but keep numberToReturn in a priority
       // queue and return the queue only, i.e. void shuffle and
       // http://docs.guava-libraries.googlecode.com/git/javadoc/com/google/common/collect/MinMaxPriorityQueue.html
-      .sortByKey(false)
+      //.sortByKey(false)
 
-      .mapPartitions(p => {
-        var i: Long = 0;
-        p.filter(o => {
-          i += 1
-          if (i <= numberToReturn) {
-            true
-          } else {
-            false
-          }
-        })
-      })
+//      .mapPartitions(p => {
+//        var i: Long = 0;
+//        p.filter(o => {
+//          i += 1
+//          if (i <= numberToReturn) {
+//            true
+//          } else {
+//            false
+//          }
+//        })
+//      })
 
     println(tanimotorrd.toDebugString)
     println(tanimotorrd.count)
 
-    val topN = tanimotorrd.take(numberToReturn)
+    val topN = tanimotorrd.top(numberToReturn)(MoleculeSimilarityOrdering)
 
     topN.foreach {case (similarity, fingerprint) =>
       println("(" + similarity + "," + HexBytesUtil.bytes2hex(fingerprint) + ")")}
@@ -252,7 +265,7 @@ object SwissSimEngine extends App {
       .joinWithCassandraTable(keyspace, table).map(r =>
       (new Molecule(r._1._1, r._2.getString("smile"), r._2.getString("details")), r._1._2))
 
-    var r = moleculerrd.collect().map(r =>
+    val r = moleculerrd.collect().map(r =>
       HexBytesUtil.bytes2hex(r._1.fingerprint) + ", " +
         r._1.smile + ", " + r._2 + ", " + r._1.details
     ).mkString("\n")
@@ -314,7 +327,7 @@ object SwissSimEngine extends App {
 
   executor.submit(new InputListener)
 
-  val server = Http.serve(":8080", service)
+  val server = Http.serve(":" + port, service)
   Await.ready(server)
 
 }
