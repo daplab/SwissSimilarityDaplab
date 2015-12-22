@@ -20,11 +20,12 @@
         <maven.rpm.plugin.version>2.1.4</maven.rpm.plugin.version>
 
         <!-- RPM Spec related -->
+        <rpm.license>2015, DAPLAB</rpm.license>
         <rpm.group>Application/DAPLAB</rpm.group>
         <rpm.rootprefix>/opt/daplab/swisssim</rpm.rootprefix>
         <rpm.apprefix>${rpm.rootprefix}</rpm.apprefix>
-        <rpm.username>daplab</rpm.username>
-        <rpm.groupname>daplab</rpm.groupname>
+        <rpm.username>daplab_prod</rpm.username>
+        <rpm.groupname>daplab_prod</rpm.groupname>
         <rpm.logdirname>logs</rpm.logdirname>
         <rpm.targetos>el6</rpm.targetos>
         <rpm.targetArch>x86_64</rpm.targetArch>
@@ -305,6 +306,7 @@
                     </execution>
                 </executions>
                 <configuration>
+                    <license>${rpm.license}</license>
                     <distribution>${rpm.distribution}</distribution>
                     <group>${rpm.group}</group>
                     <needarch>${rpm.targetArch}</needarch>
