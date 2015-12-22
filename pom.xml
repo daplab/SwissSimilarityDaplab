@@ -8,6 +8,8 @@
     <version>2.0.0-SNAPSHOT</version>
 
     <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+
         <scala.binary.version>2.10</scala.binary.version>
         <spark.streaming.version>1.4.1</spark.streaming.version>
         <maven.dependency.plugin.version>2.4</maven.dependency.plugin.version>
@@ -15,6 +17,22 @@
         <slf4j.version>1.7.10</slf4j.version>
         <junit.version>4.12</junit.version>
         <mockito.version>1.10.19</mockito.version>
+        <maven.rpm.plugin.version>2.1.4</maven.rpm.plugin.version>
+
+        <!-- RPM Spec related -->
+        <rpm.group>Application/DAPLAB</rpm.group>
+        <rpm.rootprefix>/opt/daplab/swisssim</rpm.rootprefix>
+        <rpm.apprefix>${rpm.rootprefix}</rpm.apprefix>
+        <rpm.username>daplab</rpm.username>
+        <rpm.groupname>daplab</rpm.groupname>
+        <rpm.logdirname>logs</rpm.logdirname>
+        <rpm.targetos>el6</rpm.targetos>
+        <rpm.targetArch>x86_64</rpm.targetArch>
+        <rpm.path>${rpm.apprefix}</rpm.path>
+        <rpm.logdirpath>${rpm.apprefix}/${rpm.logdirname}</rpm.logdirpath>
+        <rpm.appname>${project.artifactId}</rpm.appname>
+        <rpm.basedir>${project.artifactId}</rpm.basedir>
+        <rpm.distribution>Swisssim</rpm.distribution>
     </properties>
 
     <packaging>jar</packaging>
@@ -160,6 +178,19 @@
     <build>
         <plugins>
             <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>build-helper-maven-plugin</artifactId>
+                <version>1.9.1</version>
+                <executions>
+                    <execution>
+                        <id>parse-version</id>
+                        <goals>
+                            <goal>parse-version</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
                 <groupId>net.alchim31.maven</groupId>
                 <artifactId>scala-maven-plugin</artifactId>
                 <version>3.2.2</version>
@@ -193,40 +224,6 @@
                     </execution>
                 </executions>
             </plugin>
-            <!--plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-shade-plugin</artifactId>
-                <version>1.5</version>
-                <executions>
-                    <execution>
-                        <phase>package</phase>
-                        <goals>
-                            <goal>shade</goal>
-                        </goals>
-                        <configuration>
-                            <shadedArtifactAttached>true</shadedArtifactAttached>
-                            <shadedClassifierName>allinone</shadedClassifierName>
-                            <artifactSet>
-                                <includes>
-                                    <include>*:*</include>
-                                </includes>
-                            </artifactSet>
-                            <transformers>
-                                <transformer
-                                        implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
-                                    <resource>reference.conf</resource>
-                                </transformer>
-                                <transformer
-                                        implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
-                                    <manifestEntries>
-                                        <Main-Class>akka.Main</Main-Class>
-                                    </manifestEntries>
-                                </transformer>
-                            </transformers>
-                        </configuration>
-                    </execution>
-                </executions>
-            </plugin-->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-shade-plugin</artifactId>
@@ -296,6 +293,125 @@
 				<groupId>org.eclipse.jetty</groupId>
 				<artifactId>jetty-maven-plugin</artifactId>
 			</plugin>
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>rpm-maven-plugin</artifactId>
+                <version>${maven.rpm.plugin.version}</version>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>attached-rpm</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                <configuration>
+                    <distribution>${rpm.distribution}</distribution>
+                    <group>${rpm.group}</group>
+                    <needarch>${rpm.targetArch}</needarch>
+                    <classifier>${rpm.targetos}.${rpm.targetArch}</classifier>
+                    <name>${rpm.appname}</name>
+                    <version>
+                        ${parsedVersion.majorVersion}.${parsedVersion.minorVersion}.${parsedVersion.incrementalVersion}
+                    </version>
+                    <release>${rpmRelease}</release>
+                    <defineStatements>
+                        <defineStatement>_binaries_in_noarch_packages_terminate_build 0</defineStatement>
+                        <defineStatement>_unpackaged_files_terminate_build 0</defineStatement>
+                    </defineStatements>
+                    <mappings>
+                        <mapping>
+                            <directory>${rpm.apprefix}</directory>
+                            <filemode>0755</filemode>
+                            <username>${rpm.username}</username>
+                            <groupname>${rpm.groupname}</groupname>
+                        </mapping>
+                        <!-- Top level directory -->
+                        <!--Remember ALWAYS ensure that the base dir managed by RPM is the
+                            top level directory of the tool itself. Do NOT specify /app or /app/vscc
+                            on its own for example as this top level VSCC directory is shared across
+                            all VSCC tools and should NEVER be owned by RPM. Think of it as /usr/local
+                            etc -->
+                        <mapping>
+                            <directory>${rpm.path}</directory>
+                            <filemode>0755</filemode>
+                            <username>${rpm.username}</username>
+                            <groupname>${rpm.groupname}</groupname>
+                        </mapping>
+                        <!-- set all directory permissions -->
+                        <mapping>
+                            <configuration>true</configuration>
+                            <directory>${rpm.path}/config</directory>
+                            <recurseDirectories>true</recurseDirectories>
+                            <filemode>0755</filemode>
+                            <username>${rpm.username}</username>
+                            <groupname>${rpm.groupname}</groupname>
+                        </mapping>
+                        <mapping>
+                            <directory>${rpm.path}/bin</directory>
+                            <recurseDirectories>true</recurseDirectories>
+                            <filemode>0755</filemode>
+                            <username>${rpm.username}</username>
+                            <groupname>${rpm.groupname}</groupname>
+                        </mapping>
+                        <mapping>
+                            <directory>${rpm.path}/lib</directory>
+                            <recurseDirectories>true</recurseDirectories>
+                            <filemode>0755</filemode>
+                            <username>${rpm.username}</username>
+                            <groupname>${rpm.groupname}</groupname>
+                            <sources>
+                                <source>
+                                    <location>${project.build.directory}/${project.artifactId}-${project.version}.jar
+                                    </location>
+                                </source>
+                                <softlinkSource>
+                                    <destination>${project.artifactId}.jar</destination>
+                                    <location>${project.artifactId}-${project.version}.jar</location>
+                                </softlinkSource>
+                            </sources>
+                        </mapping>
+                        <mapping>
+                            <directory>${rpm.path}/logs</directory>
+                            <recurseDirectories>true</recurseDirectories>
+                            <filemode>0755</filemode>
+                            <username>${rpm.username}</username>
+                            <groupname>${rpm.groupname}</groupname>
+                        </mapping>
+                        <!-- We exclude the dir because the perms were defined above recursively -->
+                        <mapping>
+                            <configuration>true</configuration>
+                            <directory>${rpm.path}/config</directory>
+                            <directoryIncluded>false</directoryIncluded>
+                            <filemode>0644</filemode>
+                            <username>${rpm.username}</username>
+                            <groupname>${rpm.groupname}</groupname>
+                            <sources>
+                                <source>
+                                    <location>${project.basedir}/src/main/config</location>
+                                </source>
+                            </sources>
+                        </mapping>
+                        <!-- We exclude the dir because the perms were defined above recursively -->
+                        <mapping>
+                            <directory>${rpm.path}/bin</directory>
+                            <directoryIncluded>false</directoryIncluded>
+                            <filemode>0755</filemode>
+                            <username>${rpm.username}</username>
+                            <groupname>${rpm.groupname}</groupname>
+                            <sources>
+                                <source>
+                                    <location>${project.basedir}/src/main/scripts</location>
+                                    <!-- This prevents RPM python build failure on Jenkins -->
+                                    <excludes>
+                                        <exclude>*.pyc</exclude>
+                                        <exclude>*.pyo</exclude>
+                                    </excludes>
+                                </source>
+                            </sources>
+                        </mapping>
+                    </mappings>
+                </configuration>
+            </plugin>			
         </plugins>
     </build>
 </project>

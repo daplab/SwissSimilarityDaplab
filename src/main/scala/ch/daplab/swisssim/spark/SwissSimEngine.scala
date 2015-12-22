@@ -129,6 +129,7 @@ object SwissSimEngine extends App {
                           log.info("The response exists")
                           requestMap.remove(requestUUID)
                           val r = http.Response(req.version, http.Status.Ok)
+                          r.setContentTypeJson()
                           r.setContentString(response)
                           r
                         }
@@ -141,6 +142,16 @@ object SwissSimEngine extends App {
                   case e: IllegalArgumentException =>
                     http.Response(req.version, http.Status.BadRequest)
                 }
+              }
+              case "/ping" => {
+                val r = http.Response(req.version, http.Status.Ok)
+                r.setContentTypeJson()
+                r.setContentString("{ \"pong\" }")
+                r
+              }
+              case "/admin" => {
+                val r = http.Response(req.version, http.Status.Ok)
+                r
               }
               case _ => http.Response(req.version, http.Status.NotFound)
             }
@@ -280,7 +291,7 @@ object SwissSimEngine extends App {
         responseMap.remove(requestId)
         requestMap.remove(requestId)
       }
-    }, 60, TimeUnit.MINUTES)
+  }, 60, TimeUnit.MINUTES)
 
     val cache = (userRequest.fingerprint, r)
 
