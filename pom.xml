@@ -413,7 +413,22 @@
                         </mapping>
                     </mappings>
                 </configuration>
-            </plugin>			
+            </plugin>
         </plugins>
     </build>
+
+    <profiles>
+        <profile>
+            <id>rpmRelease.defaultValue</id>
+            <activation>
+                <activeByDefault>true</activeByDefault>
+                <property>
+                    <name>!rpmRelease</name>
+                </property>
+            </activation>
+            <properties>
+                <rpmRelease>1</rpmRelease>
+            </properties>
+        </profile>
+    </profiles>
 </project>

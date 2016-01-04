@@ -17,24 +17,27 @@
 package ch.daplab.swisssim.dto
 
 /**
-  *
+  * @param query
+  * @param similarity
   * @param fingerprint
   * @param smile
   * @param details
   *
   *
-  * CREATE TABLE swisssim.molecules (
+  * CREATE TABLE swisssim.querycache (
+    query blob,
+    similarity double,
     fingerprint blob,
     smile text,
     details text,
-    PRIMARY KEY (fingerprint, smile)
+    PRIMARY KEY (query, similarity, fingerprint, smile)
 ) WITH COMPACT STORAGE
-    AND CLUSTERING ORDER BY (smile ASC)
+    AND CLUSTERING ORDER BY (similarity DESC)
+    AND compaction = {'class': 'org.apache.cassandra.db.compaction.LeveledCompactionStrategy'}
+
     AND bloom_filter_fp_chance = 0.01
     AND caching = '{"keys":"ALL", "rows_per_partition":"NONE"}'
     AND comment = 'M'
-    AND compaction = {'class': 'org.apache.cassandra.db.compaction.SizeTieredCompactionStrategy'}
-    AND compression = {'sstable_compression': 'org.apache.cassandra.io.compress.LZ4Compressor'}
     AND dclocal_read_repair_chance = 0.1
     AND default_time_to_live = 0
     AND gc_grace_seconds = 864000
@@ -44,4 +47,6 @@ package ch.daplab.swisssim.dto
     AND read_repair_chance = 0.0
     AND speculative_retry = '99.0PERCENTILE';
   */
-case class Molecule(fingerprint: Array[Byte], smile: String, details: String)
+case class QueryCache(query: Array[Byte],
+                      similarity: Double, fingerprint: Array[Byte],
+                      smile: String, details: String)

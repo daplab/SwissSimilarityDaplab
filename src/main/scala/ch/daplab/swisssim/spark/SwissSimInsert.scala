@@ -79,23 +79,6 @@ object SwissSimInsert {
 
     join.saveToCassandra(keyspace, table)
 
-    sc.parallelize(1 to 10).map(_.toString).map(JSON.parseFull(_))
-    .filter { case m: Map[String, String] => {
-       m("eventType") match {
-         case "CREATE" => true
-         case "RENAME" => true
-         case _ => false
-       }
-    }}
-
-    val test = HexBytesUtil.hex2bytes("010203aa")
-
-    val bitset1 = java.util.BitSet.valueOf(test)
-    val bitset2 = java.util.BitSet.valueOf(test)
-
-
-//    bitset1.
-
   }
 
 }

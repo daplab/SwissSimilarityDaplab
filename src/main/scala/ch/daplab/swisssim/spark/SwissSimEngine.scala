@@ -19,7 +19,7 @@ package ch.daplab.swisssim.spark
 import java.util.UUID
 import java.util.concurrent._
 
-import ch.daplab.swisssim.dto.{UserRequest, Molecule, UserInput}
+import ch.daplab.swisssim.dto.{QueryCache, UserRequest, Molecule, UserInput}
 import ch.daplab.swisssim.utils.{MoleculeSimilarityComparator, HexBytesUtil}
 import com.datastax.spark.connector._
 import com.google.common.collect.MinMaxPriorityQueue
@@ -45,10 +45,14 @@ object SwissSimEngine extends App {
 
   private val log = Logger.get(getClass)
 
+  val DEFAULT_FINGERPRINT_LENGTH: Int = 128
+  val DEFAULT_NUMBER_TO_RETURN: Int = 1000
+  val DEFAULT_SIMILARITY_THRESHOLD: Double = 0.7
+
   // Configuration parameter read from application.conf in the classpath
   val CONF_CASSANDRA_KEYSPACE: String = "cassandra.keyspace"
   val CONF_CASSANDRA_TABLE: String = "cassandra.table"
-  val CONF_CASSANDRA_TABLE_RESPONSES_CACHE: String = "cassandra.table_responses_cache"
+  val CONF_CASSANDRA_TABLE_QUERY_CACHE: String = "cassandra.table_query_cache"
   val CONF_CASSANDRA_HOSTS: String = "cassandra.hosts"
 
   val CONF_REST_PORT: String = "rest.port"
@@ -57,7 +61,7 @@ object SwissSimEngine extends App {
 
   val keyspace = config.getString(CONF_CASSANDRA_KEYSPACE)
   val table = config.getString(CONF_CASSANDRA_TABLE)
-  val tableResponsesCache = config.getString(CONF_CASSANDRA_TABLE_RESPONSES_CACHE)
+  val tableQueryCache = config.getString(CONF_CASSANDRA_TABLE_QUERY_CACHE)
   val hosts = config.getString(CONF_CASSANDRA_HOSTS)
   val port = config.getInt(CONF_REST_PORT)
 
@@ -161,16 +165,21 @@ object SwissSimEngine extends App {
               case "/api/v1/submit" => {
                 val userInput: Option[UserInput] =
                 try {
-                  val userRequest = parse(req.contentString).extract[UserRequest]
+                  val tmpUserRequest = parse(req.contentString).extract[UserRequest]
+                  val userRequest = new UserRequest(tmpUserRequest.fingerprint,
+                    Math.min(tmpUserRequest.limit, DEFAULT_NUMBER_TO_RETURN),
+                    Math.min(tmpUserRequest.threshold, DEFAULT_SIMILARITY_THRESHOLD)
+                  )
                   val uuid = UUID.randomUUID
                   val fingerprint = HexBytesUtil.hex2bytes(userRequest.fingerprint)
-                  if (fingerprint == null || fingerprint.length != 128) {
+                  if (fingerprint == null || fingerprint.length != DEFAULT_FINGERPRINT_LENGTH) {
                     throw new IllegalArgumentException("Wrong fingerprint length")
                   } else {
                     Some(UserInput(fingerprint, uuid, userRequest))
                   }
                 } catch {
                   case e: Exception => {
+                    log.error("Exception while parsing the request", e)
                     e.printStackTrace()
                     None
                   }
@@ -201,6 +210,7 @@ object SwissSimEngine extends App {
 
       } catch {
         case e: Exception => {
+          log.error("Exception while parsing the request", e)
           e.printStackTrace()
           Future.value(
             http.Response(req.version, http.Status.InternalServerError)
@@ -215,10 +225,26 @@ object SwissSimEngine extends App {
       x._1 compareTo y._1
   }
 
+  object QueryCacheOrdering extends Ordering[QueryCache] {
+    override def compare(x: QueryCache, y: QueryCache): Int =
+      x.similarity compareTo y.similarity
+  }
+
   def checkCache(sc: SparkContext, userRequest: UserInput): Option[String] = {
-    sc.cassandraTable(keyspace, tableResponsesCache)
-      .where("fingerprint = ?", userRequest.fingerprint)
-      .map(r => r.getString("payload")).collect().headOption
+    val cacherdd = sc.cassandraTable(keyspace, tableQueryCache)
+      .where("query = ? and similarity > ? LIMIT ?", userRequest.fingerprint,
+        userRequest.userRequest.threshold, userRequest.userRequest.limit)
+      .map(r => new QueryCache(r.getBytes("query").array(),
+        r.getDouble("similarity"), r.getBytes("fingerprint").array(), r.getString("smile"),
+      r.getString("details")))
+
+    if (cacherdd.isEmpty()) {
+      return None
+    } else {
+      return Some(formatRDD(cacherdd,
+        userRequest.userRequest.limit,
+        userRequest.userRequest.threshold))
+    }
   }
 
   def query(sc: SparkContext, userRequest: UserInput): Unit = {
@@ -228,8 +254,10 @@ object SwissSimEngine extends App {
     log.info("Starting the heavy query for request %s (%s)",
       userRequest.requestId, userRequest.userRequest.fingerprint)
 
-    val numberToReturn = Math.min(userRequest.userRequest.limit, 200)
-    val similarityThreshold = Math.max(userRequest.userRequest.threshold, 0.7)
+    val numberToReturn = Math.min(userRequest.userRequest.limit,
+      DEFAULT_NUMBER_TO_RETURN)
+    val similarityThreshold = Math.max(userRequest.userRequest.threshold,
+      DEFAULT_SIMILARITY_THRESHOLD)
 
     val userInput = HexBytesUtil.byteArrayToLongArray(userRequest.fingerprint)
 
@@ -238,71 +266,46 @@ object SwissSimEngine extends App {
         val ba = b.array
         (HexBytesUtil.tanimoto(userInput, HexBytesUtil.byteArrayToLongArray(ba)), ba)
       })
-      .filter( t => t._1 >= similarityThreshold)
-
-//      .mapPartitions(i => {
-//        val queue: MinMaxPriorityQueue[(Double, Array[Byte])] =
-//          new Builder[(Double, Array[Byte])](new MoleculeSimilarityComparator)
-//          .maximumSize(numberToReturn).create()
-//        i.foreach(queue.offer(_))
-//        queue.iterator()
-//      }.asScala)
-      // TODO: don't sort by key here, but keep numberToReturn in a priority
-      // queue and return the queue only, i.e. void shuffle and
-      // http://docs.guava-libraries.googlecode.com/git/javadoc/com/google/common/collect/MinMaxPriorityQueue.html
-      //.sortByKey(false)
-
-//      .mapPartitions(p => {
-//        var i: Long = 0;
-//        p.filter(o => {
-//          i += 1
-//          if (i <= numberToReturn) {
-//            true
-//          } else {
-//            false
-//          }
-//        })
-//      })
+      .filter( t => t._1 >= DEFAULT_SIMILARITY_THRESHOLD)
 
     println(tanimotorrd.toDebugString)
     println(tanimotorrd.count)
 
-    val topN = tanimotorrd.top(numberToReturn)(MoleculeSimilarityOrdering)
+    val topN = tanimotorrd.top(DEFAULT_NUMBER_TO_RETURN)(MoleculeSimilarityOrdering)
 
     topN.foreach {case (similarity, fingerprint) =>
       println("(" + similarity + "," + HexBytesUtil.bytes2hex(fingerprint) + ")")}
 
-    val moleculerrd = sc.parallelize(topN).map(r => (r._2, r._1))
+    val moleculerrd: RDD[QueryCache] = sc.parallelize(topN).map(r => (r._2, r._1))
       .joinWithCassandraTable(keyspace, table).map(r =>
-      (new Molecule(r._1._1, r._2.getString("smile"), r._2.getString("details")), r._1._2))
-
-    val r = moleculerrd.collect().map(r =>
-      HexBytesUtil.bytes2hex(r._1.fingerprint) + ", " +
-        r._1.smile + ", " + r._2 + ", " + r._1.details
-    ).mkString("\n")
-
-    println("1" + userRequest.requestId + ", " + r)
-
-    responseMap += userRequest.requestId -> r
-
-    scheduledExecutorService.schedule(new Runnable {
-      val requestId = userRequest.requestId
-      override def run(): Unit = {
-        responseMap.remove(requestId)
-        requestMap.remove(requestId)
-      }
-  }, 60, TimeUnit.MINUTES)
-
-    val cache = (userRequest.fingerprint, r)
+      new QueryCache(userRequest.fingerprint, r._1._2, r._1._1,
+        r._2.getString("smile"), r._2.getString("details")))
 
     try {
-      sc.parallelize(Seq(cache), 1)
-        .saveToCassandra(keyspace, tableResponsesCache, SomeColumns("fingerprint", "payload"))
+      moleculerrd.saveToCassandra(keyspace, tableQueryCache,
+          SomeColumns("query", "similarity", "fingerprint", "smile", "details"))
     } catch {
       case e: Exception => {
+        log.error("Exception while saving the cache to Cassandra", e)
         e.printStackTrace()
       }
     }
+
+    val r = formatRDD(moleculerrd, numberToReturn, similarityThreshold)
+
+    println("1 " + userRequest.requestId + ", " + r)
+
+    responseMap += userRequest.requestId -> r
+
+    scheduledExecutorService.schedule(
+      new Runnable {
+        val requestId = userRequest.requestId
+        override def run(): Unit = {
+          responseMap.remove(requestId)
+          requestMap.remove(requestId)
+        }
+      }, 60, TimeUnit.MINUTES)
+
   }
 
   class InputListener extends Runnable with AutoCloseable {
@@ -323,7 +326,10 @@ object SwissSimEngine extends App {
             }
           }
         } catch {
-          case e: Exception => e.printStackTrace()
+          case e: Exception => {
+            log.error("Exception while processing the user request", e)
+            e.printStackTrace()
+          }
         }
       }
     }
@@ -341,4 +347,11 @@ object SwissSimEngine extends App {
   val server = Http.serve(":" + port, service)
   Await.ready(server)
 
+  def formatRDD(rdd: RDD[QueryCache], limit: Int, threshold: Double ): String = {
+    "[" + rdd.filter(_.similarity > threshold).top(limit)(QueryCacheOrdering).map(r =>
+      "{ \"fingerprint\": \"" + HexBytesUtil.bytes2hex(r.fingerprint) + "\", " +
+        "\"smile\": \"" + r.smile + "\", \"similarity\": " + r.similarity + ", \"details\": \"" +
+        r.details + "\" }"
+    ).mkString("\n") + "]"
+  }
 }
