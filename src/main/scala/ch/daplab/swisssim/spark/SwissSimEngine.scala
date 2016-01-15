@@ -232,8 +232,8 @@ object SwissSimEngine extends App {
 
   def checkCache(sc: SparkContext, userRequest: UserInput): Option[String] = {
     val cacherdd = sc.cassandraTable(keyspace, tableQueryCache)
-      .where("query = ? and similarity > ? LIMIT ?", userRequest.fingerprint,
-        userRequest.userRequest.threshold, userRequest.userRequest.limit)
+      .where("query = ? and similarity > ?", userRequest.fingerprint,
+        userRequest.userRequest.threshold).limit(userRequest.userRequest.limit)
       .map(r => new QueryCache(r.getBytes("query").array(),
         r.getDouble("similarity"), r.getBytes("fingerprint").array(), r.getString("smile"),
       r.getString("details")))
