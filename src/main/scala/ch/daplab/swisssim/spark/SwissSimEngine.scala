@@ -167,7 +167,7 @@ object SwissSimEngine extends App {
                   val tmpUserRequest = parse(req.contentString).extract[UserRequest]
                   val userRequest = new UserRequest(tmpUserRequest.fingerprint,
                     Math.min(tmpUserRequest.limit, DEFAULT_NUMBER_TO_RETURN),
-                    Math.min(tmpUserRequest.threshold, DEFAULT_SIMILARITY_THRESHOLD)
+                    Math.max(tmpUserRequest.threshold, DEFAULT_SIMILARITY_THRESHOLD)
                   )
                   val uuid = UUID.randomUUID
                   val fingerprint = HexBytesUtil.hex2bytes(userRequest.fingerprint)
