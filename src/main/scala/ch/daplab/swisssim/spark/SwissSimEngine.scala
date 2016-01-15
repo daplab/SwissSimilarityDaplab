@@ -127,11 +127,10 @@ object SwissSimEngine extends App {
                   val requestUUID = UUID.fromString(requestId)
                   requestMap.get(requestUUID) match {
                     case Some(request) => {
-                      log.info("The request exists")
-                      responseMap.remove(requestUUID) match {
+                      log.debug("The request exists")
+                      responseMap.get(requestUUID) match {
                         case Some(response) => {
-                          log.info("The response exists")
-                          requestMap.remove(requestUUID)
+                          log.debug("The response exists")
                           val r = http.Response(req.version, http.Status.Ok)
                           r.setContentTypeJson()
                           r.setContentString(response)
