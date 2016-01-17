@@ -128,10 +128,13 @@
             <div class="section">
               
                 <p>This page details the API accepting requests for the SwissSimilarities database.</p>
-<p>As the search process might take some time, the search is asynchronous and then split in two parts: </p>
+<p>The API is globally available at <a href="https://swisssim.daplab.ch">https://swisssim.daplab.ch</a></p>
+<p><strong>General Principle</strong></p>
+<p>As the processing associated to requests might take some time before completion, which might lead to timeouts
+somewhere in the request chain, the API is split in two parts:</p>
 <ol>
 <li>Submitting a search request via a POST call,</li>
-<li>Polling to retrieve the results via a GET</li>
+<li>Polling to retrieve the result via a GET</li>
 </ol>
 <p>The following flow diagram shows a typical interaction with the server: the request is submitted first, the server
 returns a HTTP status code <code>201 Created</code> along with a <a href="https://en.wikipedia.org/wiki/Universally_unique_identifier">UUID</a>
@@ -203,13 +206,13 @@ the location at which the job can be polled, as well as a JSON object containtin
 
 Returns 201 Created
 ...
-Location: /api/v1/result/$REQUEST_UUID
+Location: /api/v1/result/4d8de004-29e9-499d-9b81-a329d454040e
 {
-   &quot;uuid&quot;: &quot;$REQUEST_UUID&quot;
+   &quot;requestId&quot;: &quot;4d8de004-29e9-499d-9b81-a329d454040e&quot;
 }
 </code></pre>
 
-<p>Malformatted requests, as well as requests missing the mandatory parameter(s) 
+<p>Malformed requests, as well as requests missing the mandatory parameter(s) 
 will return a HTTP status <code>400 Bad Request</code>.</p>
 <h1 id="retrieve-the-results">Retrieve the results</h1>
 <p>Retrieving the results might be composed of several calls. As long as the result is not ready, the call returns

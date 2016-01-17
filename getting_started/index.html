@@ -124,33 +124,47 @@
           <div role="main">
             <div class="section">
               
-                <h2 id="submit-the-request">Submit the request</h2>
-<pre><code class="bash">curl -vvvv -X POST --data '{ &quot;fingerprint&quot;: &quot;0001801a018002082100110810b00610001c106000004020030098020000110806100100400048e00100a00c608188000200980702600201816600c1020c000c080000080400800802e0200800022801c010008018008138218000418970041800086000c008014020048000000400880400420420c6000860260000614306a6&quot;, &quot;limit&quot;: 400, &quot;threshold&quot;: 0.8 }' http://localhost:8080/api/v1/submit
+                <p>Swissim project is deployed for preview in the <a href="http://daplab.ch">DAPLAB</a> cluster, hosted with ❤ by the DAPLAB team.</p>
+<p>Below you'll find examples requests and response interacting with the <a href="../api/">API</a></p>
+<h2 id="submit-the-request">Submit the request</h2>
+<p>Submitting the request is fairly easy once you get your molecule fingerprint.</p>
+<pre><code class="bash">curl -vvvv -X POST --data '{ &quot;fingerprint&quot;: &quot;0001801a018002082100110810b00610001c106000004020030098020000110806100100400048e00100a00c608188000200980702600201816600c1020c000c080000080400800802e0200800022801c010008018008138218000418970041800086000c008014020048000000400880400420420c6000860260000614306a6&quot;, &quot;limit&quot;: 100, &quot;threshold&quot;: 0.8 }' https://swisssim.daplab.ch/api/v1/submit
 ...
 &lt; Location: /api/v1/result/c94480a6-9e03-4ca1-b458-b04ea7603551
 ...
 </code></pre>
 
-<p>Please note the <code>Location</code> URI for further pollling.</p>
+<p>Please save the <code>Location</code> URI to be able to retrieve the results.</p>
 <h2 id="poll-the-result">Poll the result</h2>
-<pre><code class="bash">curl -vvvv http://localhost:8080/api/v1/result/c94480a6-9e03-4ca1-b458-b04ea7603551
+<p>As the processing might take some time before it compares your molecule with the multiple hundreds of millions of molecules,
+the call to retrieve the result might return a HTTP status code <code>202</code>, meaning that the sever is still processing
+your query. You have to retry the same API call until you get a <code>200</code> status code:</p>
+<pre><code class="bash">curl -vvvv https://swisssim.daplab.ch/api/v1/result/c94480a6-9e03-4ca1-b458-b04ea7603551
 ...
 &lt; HTTP/1.1 202 Accepted
 ...
 </code></pre>
 
-<p>HTTP Code <code>202</code> indicates that the query is running and you should retry in few seconds.</p>
+<p>The HTTP code <code>202</code> indicates that the query is running and you should retry in few seconds.</p>
 <h2 id="retrieve-the-content">Retrieve the content</h2>
-<p>The query to retrieve the content is the same, the a HTTP code <code>200</code> is returned
-along side with the payload</p>
-<pre><code class="bash">curl -vvvv http://localhost:8080/api/v1/result/c94480a6-9e03-4ca1-b458-b04ea7603551
+<p>The query to retrieve the content is the same, and a HTTP code <code>200</code> is returned indicating that the result of the
+processing will follow:</p>
+<pre><code class="bash">curl -vvvv https://swisssim.daplab.ch/api/v1/result/c94480a6-9e03-4ca1-b458-b04ea7603551
 ...
 &lt; HTTP/1.1 200 Ok
 ...
-0001801a018002082100110810b00610001c106000004020030098020000110806100100400048e00100a00c608188000200980702600201816600c1020c000c080000080400800802e0200800022801c010008018008138218000418970041800086000c008014020048000000400880400420420c6000860260000614306a0, COc1ccc(cc1)n1c(=O)c2cc(c(Cl)cc2nc1[C@@H]1C[C@H](C)CC[C@H]1C(C)C)S(=O)(=O)N, 1.0, ; Nc1cc(Cl)c(cc1C(O)=O)S(N)(=O)=O ; 1287030|FLUKA ; SigmaAldrich ; COc1ccc(NC(=O)[C@@H]2C[C@H](C)CC[C@H]2C(C)C)cc1 ; W0519|SIGMA ; SigmaAldrich ; 0008-0000016185 ; Niementowski_quinazoline
-0401801a018002082100110810b00610001c10e000004020020098020000100806100100400048e00100a00c60818800028098070a600201816600c1020c000c180000080400800800e0000800022801c000008018008138218000418970041800086000c008014028048000000400080400420420c6000860240000614306a0, CCOc1ccc(cc1)n1c(C[C@H](C)O)nc2cc(Cl)c(cc2c1=O)S(=O)(=O)N, 0.9235294117647059, ; Nc1cc(Cl)c(cc1C(O)=O)S(N)(=O)=O ; 1287030|FLUKA ; SigmaAldrich ; CCOc1ccc(NC(=O)C[C@H](C)O)cc1 ; B4027|FLUKA ; SigmaAldrich ; 0008-0000014810 ; Niementowski_quinazoline
-...
+[{ &quot;fingerprint&quot;: &quot;00018012018002082140010010b00600001c006000004020020098020000100006100100400048e00100200c600188000200b80600600201806600c0020c400c080000180000800800e0000000022801c000008018008138218000418970000800086000c00801402000800000040008040040042046000860040000404306a0&quot;, &quot;smile&quot;: &quot;Cc1nc2cc(Cl)c(cc2c(=O)n1c1ccccc1O)S(=O)(=O)N&quot;, &quot;similarity&quot;: 0.7941176470588235, &quot;details&quot;: &quot;; Nc1cc(Cl)c(cc1C(O)=O)S(N)(=O)=O ; 1287030|FLUKA ; SigmaAldrich ; CC(=O)Nc1ccccc1O ; A7000|ALDRICH ; SigmaAldrich ; 0008-0000014351 ; Niementowski_quinazoline&quot; }
+ { &quot;fingerprint&quot;: &quot;0000801a018002082100100a10b00610800c106000004020030099020000110006104100400008e00100a00c6081880002049c0702600201816e00c1020e402c080820080c00820000e0000800026801c000008018008938218400418970041800082080c0080140300880000004008c0400460420c6000860240000600306e0&quot;, &quot;smile&quot;: &quot;CCCC(C)(C)c1nc2ccc(cc2c(=O)n1c1ccc(Cl)cc1)S(=O)(=O)Nc1ccccc1OC&quot;, &quot;similarity&quot;: 0.7936507936507936, &quot;details&quot;: &quot;; COc1ccccc1NS(=O)(=O)c1ccc(N)c(c1)C(O)=O ; CDS010681|ALDRICH ; SigmaAldrich ; CCCC(C)(C)C(=O)Nc1ccc(Cl)cc1 ; 36172|FLUKA ; SigmaAldrich ; 0008-0000098610 ; Niementowski_quinazoline&quot; }
+ ...
+]
 </code></pre>
+
+<p>That's it. Easy isn't it? Just keep in mind that:</p>
+<ul>
+<li>There're no SLA on Swisssim, your query might be queued for a while</li>
+<li>The output of the processing is kept 1 hour before being discarded and returning a <code>404</code></li>
+<li>If you find cool writing such piece of software, join us every Thursday evening for our weekly Hacky Thursdays!</li>
+</ul>
               
             </div>
           </div>
