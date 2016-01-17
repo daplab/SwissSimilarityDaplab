@@ -1,0 +1,17 @@
+site_name: Swiss Similarities
+pages:
+- Home: 'index.md'
+- 'Getting Started': 'getting_started.md'
+- API: 'api.md'
+- 'Architecture': 'architecture.md'
+
+theme: readthedocs
+site_favicon: logo.png
+
+markdown_extensions:
+    - extra
+    - attr_list
+    - footnotes
+    
+extra_css: 
+    - daplab.css

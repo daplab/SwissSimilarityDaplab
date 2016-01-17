@@ -1,0 +1,62 @@
+
+@import url('//maxcdn.bootstrapcdn.com/font-awesome/4.3.0/css/font-awesome.min.css');
+@import url('https://fonts.googleapis.com/css?family=Open+Sans');
+
+
+.vscc-notify-info, .vscc-notify-success, .vscc-notify-warning, .vscc-notify-error {
+    padding:10px 10px 10px 20px;
+    margin:10px 0;
+    border-radius:10px;
+}
+.vscc-notify-info:before, .vscc-notify-success:before, .vscc-notify-warning:before, .vscc-notify-error:before {
+    font-family:FontAwesome;
+    font-style:normal;
+    font-weight:400;
+    speak:none;
+    display:inline-block;
+    text-decoration:inherit;
+    width:1em;
+    margin-right:.2em;
+    text-align:center;
+    font-variant:normal;
+    text-transform:none;
+    line-height:1em;
+    margin-left:.2em;
+    -webkit-font-smoothing:antialiased;
+    -moz-osx-font-smoothing:grayscale
+}
+.vscc-notify-info:before {
+    content:"\f05a";
+}
+.vscc-notify-success:before {
+    content:'\f00c';
+}
+.vscc-notify-warning:before {
+    content:'\f071';
+}
+.vscc-notify-error:before {
+    content:'\f057';
+}
+.vscc-notify-info {
+    color: #00529B;
+    background-color: #BDE5F8;
+}
+.vscc-notify-success {
+    color: #4F8A10;
+    background-color: #DFF2BF;
+}
+.vscc-notify-warning {
+    color: #9F6000;
+    background-color: #FEEFB3;
+}
+.vscc-notify-error {
+    color: #D8000C;
+    background-color: #FFBABA;
+}
+
+table {
+    empty-cells: hide;
+}
+
+
+
