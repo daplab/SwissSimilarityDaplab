@@ -191,6 +191,7 @@ object SwissSimEngine extends App {
                     enqueue(i)
                     val r = http.Response(req.version, http.Status.Created)
                     r.headerMap.add("Location", "/api/v1/result/" + i.requestId)
+                    r.setContentString("{ \"requestId\": \"" + i.requestId + "\" }")
                     r
                   }
                   case None => http.Response(req.version, http.Status.BadRequest)

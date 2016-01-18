@@ -52,4 +52,4 @@ That's it. Easy isn't it? Just keep in mind that:
 
 - There're no SLA on Swisssim, your query might be queued for a while
 - The output of the processing is kept 1 hour before being discarded and returning a `404`
-- If you find cool writing such piece of software, join us every Thursday evening for our weekly Hacky Thursdays!
+- If you find cool writing such piece of software, join us every Thursday evening for our weekly [Hacky Thursdays](http://daplab.ch/#hacky)!

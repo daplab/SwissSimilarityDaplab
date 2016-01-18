@@ -1,9 +1,14 @@
 This page details the API accepting requests for the SwissSimilarities database.
 
-As the search process might take some time, the search is asynchronous and then split in two parts: 
+The API is globally available at [https://swisssim.daplab.ch](https://swisssim.daplab.ch)
+
+**General Principle**
+
+As the processing associated to requests might take some time before completion, which might lead to timeouts
+somewhere in the request chain, the API is split in two parts:
 
 1. Submitting a search request via a POST call,
-2. Polling to retrieve the results via a GET
+2. Polling to retrieve the result via a GET
 
 The following flow diagram shows a typical interaction with the server: the request is submitted first, the server
 returns a HTTP status code `201 Created` along with a [UUID](https://en.wikipedia.org/wiki/Universally_unique_identifier)
@@ -65,13 +70,13 @@ POST /api/v1/submit
 
 Returns 201 Created
 ...
-Location: /api/v1/result/$REQUEST_UUID
+Location: /api/v1/result/4d8de004-29e9-499d-9b81-a329d454040e
 {
-   "uuid": "$REQUEST_UUID"
+   "requestId": "4d8de004-29e9-499d-9b81-a329d454040e"
 }
 ```
 
-Malformatted requests, as well as requests missing the mandatory parameter(s) 
+Malformed requests, as well as requests missing the mandatory parameter(s) 
 will return a HTTP status `400 Bad Request`.
 
 
