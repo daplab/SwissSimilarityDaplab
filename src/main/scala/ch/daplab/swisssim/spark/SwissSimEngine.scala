@@ -269,9 +269,9 @@ object SwissSimEngine extends App {
       .filter( t => t._1 >= DEFAULT_SIMILARITY_THRESHOLD)
 
     println(tanimotorrd.toDebugString)
-    //println(tanimotorrd.count)
+    // println(tanimotorrd.count)
 
-    val topN = tanimotorrd.top(DEFAULT_NUMBER_TO_RETURN)(MoleculeSimilarityOrdering)
+    val topN = tanimotorrd.takeOrdered(DEFAULT_NUMBER_TO_RETURN)(MoleculeSimilarityOrdering)
 
     topN.foreach {case (similarity, fingerprint) =>
       println("(" + similarity + "," + HexBytesUtil.bytes2hex(fingerprint) + ")")}
